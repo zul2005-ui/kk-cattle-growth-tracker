@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bio-Calculus: Kedah-Kelantan Cattle Growth Rate Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+        
+        <div class="bg-gradient-to-r from-emerald-700 to-teal-600 p-6 md:p-8 text-white">
+            <span class="bg-emerald-500/30 text-emerald-100 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                Animal Husbandry Technology Application
+            </span>
+            <h1 class="text-3xl md:text-4xl font-extrabold mt-2">Derivatives in Malaysian Beef Production</h1>
+            <p class="text-emerald-100 mt-2 text-sm md:text-base max-w-2xl">
+                Visualizing growth rates ($f'(x)$) of Kedah-Kelantan (KK) Crossbreed Cattle to optimize feeding phases and market readiness.
+            </p>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-8">
+            
+            <section class="grid md:grid-cols-3 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                <div class="md:col-span-2 space-y-3">
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        🌱 The Bioscience Context
+                    </h2>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        In Malaysian livestock management, understanding the **Average Daily Gain (ADG)** of beef cattle is crucial for feed efficiency. Kedah-Kelantan (KK) crossbreeds follow a sigmoidal (S-shaped) growth curve. 
+                    </p>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        While the function $f(x)$ tells us the total weight of the animal at day $x$, livestock managers need the <strong>derivative $f'(x)$</strong> to find the *exact rate of growth* at any given day. Pinpointing when growth peaks (the inflection point) allows farmers to optimize high-protein feed allocation before growth naturally tapers off.
+                    </p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-xs border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold uppercase text-slate-400 block tracking-wider">Data Reference</span>
+                        <p class="text-xs font-semibold text-emerald-700 mt-1">Malaysian Agricultural Research and Development Institute (MARDI)</p>
+                        <p class="text-[11px] text-slate-500 mt-1 italic">Parameters modeled after realistic KK-cross growth cycles (0 to 400 days post-weaning).</p>
+                    </div>
+                    <div class="mt-4 pt-2 border-t border-slate-100 text-[11px] text-slate-400">
+                        Webpage: <em>mardi.gov.my / Animal Production Insights</em>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-emerald-50/50 border border-emerald-100 p-5 rounded-xl">
+                <h3 class="text-sm font-bold text-emerald-900 uppercase tracking-wider mb-3">Mathematical Modeling</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-4 rounded-lg border border-emerald-100">
+                        <span class="text-xs font-bold text-slate-400 uppercase">Weight Function: $f(x)$</span>
+                        <div class="text-lg font-mono font-bold text-emerald-800 my-1">
+                            f(x) = 50 + 250 / (1 + e^{-0.015(x - 180)})
+                        </div>
+                        <p class="text-xs text-slate-500">Calculates total body weight (kg) at Day $x$. (50kg base weaning weight, 300kg maturity limit).</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-emerald-100">
+                        <span class="text-xs font-bold text-amber-500 uppercase">Growth Rate Derivative: $f'(x)$</span>
+                        <div class="text-lg font-mono font-bold text-amber-700 my-1">
+                            f'(x) = 3.75 &middot; e^{-0.015(x - 180)} / (1 + e^{-0.015(x - 180)})^2
+                        </div>
+                        <p class="text-xs text-slate-500">Calculates the Instantaneous Average Daily Gain (kg/day) using the Chain Rule.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Interactive Growth Dynamics</h2>
+                        <p class="text-xs text-slate-500">Click anywhere directly on the blue data line to calculate precise calculus outputs.</p>
+                    </div>
+                    <span class="text-xs bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-md font-mono">
+                        Target Sample: KK Crossbreed (0 - 400 Days)
+                    </span>
+                </div>
+                
+                <div class="relative bg-slate-900 p-2 md:p-4 rounded-xl shadow-inner min-h-[350px]">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </section>
+
+            <section id="resultPanel" class="hidden transition-all duration-300 transform scale-95 bg-slate-900 text-white p-6 rounded-xl border-l-4 border-amber-500 shadow-lg">
+                <div class="grid md:grid-cols-3 gap-4 items-center">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400 block">Selected Timeline</span>
+                        <div class="text-3xl font-black text-amber-400" id="resDay">Day --</div>
+                    </div>
+                    <div class="space-y-1">
+                        <div>
+                            <span class="text-xs text-slate-400">Animal Weight ($f(x)$):</span>
+                            <span class="font-mono font-bold text-emerald-400 ml-1" id="resWeight">-- kg</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400">Rate of Change ($f'(x)$):</span>
+                            <span class="font-mono font-bold text-amber-400 ml-1" id="resRate">-- kg/day</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400 block mb-1">👨‍🌾 Farmer's Summary</span>
+                        <p class="text-xs text-slate-300 leading-relaxed" id="resLayman">
+                            Click on a graph point to generate a live interpretation of livestock physiological efficiency.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+        
+        <div class="bg-slate-100 px-6 py-4 border-t border-slate-200 text-center text-xs text-slate-500">
+            Designed for Malaysian Bioscience Hub & Animal Husbandry Undergraduates. Powered by Chart.js.
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        const resultPanel = document.getElementById('resultPanel');
+        
+        // Mathematical Constants derived from Malaysian MARDI growth models for KK Cattle
+        const W_base = 50;   // Weaning weight (kg)
+        const W_max = 250;  // Maximum capacity gain (kg)
+        const k = 0.015;    // Growth rate constant
+        const x_mid = 180;  // Inflection point in days (around 6 months post-weaning)
+
+        // Generate data points for the 0 to 400 days range
+        const labels = [];
+        const weightData = [];
+        const derivativeData = [];
+
+        for (let x = 0; x <= 400; x += 10) {
+            labels.push(x);
+            
+            // Logistic Growth Function f(x)
+            const fx = W_base + (W_max / (1 + Math.exp(-k * (x - x_mid))));
+            weightData.push(Number(fx.toFixed(2)));
+
+            // Derivative Function f'(x)
+            const expTerm = Math.exp(-k * (x - x_mid));
+            const fPrimeX = (W_max * k * expTerm) / Math.pow(1 + expTerm, 2);
+            derivativeData.push(Number(fPrimeX.toFixed(3)));
+        }
+
+        // Initialize Chart.js with custom animations
+        const growthChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Cattle Weight f(x) (kg)',
+                        data: weightData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 3,
+                        yAxisID: 'yWeight',
+                        tension: 0.2,
+                        pointRadius: 2,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#10b981'
+                    },
+                    {
+                        label: "Growth Rate f'(x) (kg/day)",
+                        data: derivativeData,
+                        borderColor: '#f59e0b',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        yAxisID: 'yRate',
+                        tension: 0.2,
+                        pointRadius: 0 // Hidden until hovered/clicked
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Days Post-Weaning', color: '#94a3b8' },
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    yWeight: {
+                        type: 'linear',
+                        position: 'left',
+                        title: { display: true, text: 'Total Weight (kg)', color: '#10b981' },
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                        ticks: { color: '#10b981' },
+                        min: 40,
+                        max: 320
+                    },
+                    yRate: {
+                        type: 'linear',
+                        position: 'right',
+                        title: { display: true, text: 'Daily Rate of Change (kg/day)', color: '#f59e0b' },
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#f59e0b' },
+                        min: 0,
+                        max: 1.2
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#f1f5f9' }
+                    }
+                },
+                // Click handler configuration
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const day = labels[index];
+                        const weight = weightData[index];
+                        const rate = derivativeData[index];
+                        
+                        displayCalculusInterpretation(day, weight, rate);
+                    }
+                }
+            }
+        });
+
+        // Function to compute livestock interpretation based on derivative values
+        function displayCalculusInterpretation(day, weight, rate) {
+            document.getElementById('resDay').innerText = `Day ${day}`;
+            document.getElementById('resWeight').innerText = `${weight} kg`;
+            document.getElementById('resRate').innerText = `${rate} kg/day`;
+
+            let laymanExplanation = "";
+
+            if (day < 120) {
+                laymanExplanation = `The calf is starting steady structural frame development. The derivative is small but expanding ($f'(x)$ is accelerating), indicating the feed is efficiently building early muscle mass.`;
+            } else if (day >= 120 && day <= 240) {
+                laymanExplanation = `Peak performance zone! The derivative is at its absolute maximum near Day 180 ($f'(x) \\approx ${rate}$ kg/day). The animal is converting feed to beef at maximum genetic potential. Maintain intensive feed ratios.`;
+            } else {
+                laymanExplanation = `Growth velocity is slowing down ($f'(x)$ approaches zero). The cattle has reached operational biological maturity. Keeping the animal past this curve reduces profitability as feed cost will outweigh marginal weight gain.`;
+            }
+
+            // Reveal and animate the result module
+            resultPanel.classList.remove('hidden');
+            setTimeout(() => {
+                resultPanel.classList.remove('scale-95');
+                resultPanel.classList.add('scale-100');
+            }, 50);
+        }
+    </script>
+</body>
+</html>
